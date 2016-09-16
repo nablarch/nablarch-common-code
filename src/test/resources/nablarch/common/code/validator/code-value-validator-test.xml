@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component-configuration xmlns="http://tis.co.jp/nablarch/component-configuration"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <import file="db-default.xml"/>
+
+    <!-- DbManagerの設定 -->
+    <component name="codeDbManager" class="nablarch.core.db.transaction.SimpleDbTransactionManager">
+        <property name="dbTransactionName" value="code"/>
+    </component>
+    
+    <component name="codeLoader"
+               class="nablarch.common.code.MockCodeLoader">
+        <property name="dbManager" ref="codeDbManager"/>
+    </component>
+
+    <component name="codeCache"
+               class="nablarch.core.cache.BasicStaticDataCache" >
+
+        <property name="loader" ref="codeLoader"/>
+
+        <property name="loadOnStartup" value="false"/>
+    </component>
+
+    <component name="codeManager"
+        class="nablarch.common.code.BasicCodeManager" autowireType="None">
+        <property name="codeDefinitionCache" ref="codeCache"/>
+    </component>
+
+    <component name="initializer" class="nablarch.core.repository.initialization.BasicApplicationInitializer">
+        <property name="initializeList">
+            <list>
+                <component-ref name="codeLoader"/>
+                <component-ref name="codeCache"/>
+                <component-ref name="validationManager"/>
+                <component-ref name="formDefinitionCache"/>
+            </list>
+        </property>
+    </component>
+
+    <!-- validation用設定 -->
+
+    <component name="stringResourceHolder" class="nablarch.test.support.message.MockStringResourceHolder">
+    </component>
+
+    <component name="formDefinitionCache" class="nablarch.core.cache.BasicStaticDataCache">
+        <property name="loader">
+            <component class="nablarch.core.validation.FormValidationDefinitionLoader"/>
+        </property>
+    </component>
+
+    <component name="validationManager" class="nablarch.core.validation.ValidationManager">
+        <property name="formDefinitionCache" ref="formDefinitionCache"/>
+        <property name="convertors" >
+            <list>
+                <component class="nablarch.core.validation.convertor.StringConvertor">
+                    <property name="conversionFailedMessageId" value="MSG00000"/>
+                </component>
+                <component class="nablarch.core.validation.convertor.StringArrayConvertor">
+                </component>
+            </list>
+        </property>
+        
+        <property name="validators" >
+            <list>
+                <component class="nablarch.common.code.validator.CodeValueValidator">
+                    <property name="messageId" value="MSG00001"/>
+                </component>
+            </list>
+        </property>
+        <property name="formDefinitionCache" ref="formDefinitionCache">
+        </property>
+    </component>
+    <component name="formDefinitionCache" class="nablarch.core.cache.BasicStaticDataCache">
+        <property name="loader">
+            <component class="nablarch.core.validation.FormValidationDefinitionLoader"/>
+        </property>
+    </component>
+
+</component-configuration>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component-configuration xmlns="http://tis.co.jp/nablarch/component-configuration"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <import file="db-default.xml"/>
+
+    <!-- DbManagerの設定 -->
+    <component name="codeDbManager" class="nablarch.core.db.transaction.SimpleDbTransactionManager">
+        <property name="dbTransactionName" value="code"/>
+    </component>
+    
+    <component name="codeLoader"
+               class="nablarch.common.code.MockCodeLoader">
+        <property name="dbManager" ref="codeDbManager"/>
+    </component>
+
+    <component name="codeCache"
+               class="nablarch.core.cache.BasicStaticDataCache" >
+
+        <property name="loader" ref="codeLoader"/>
+
+        <property name="loadOnStartup" value="false"/>
+    </component>
+
+    <component name="codeManager"
+        class="nablarch.common.code.BasicCodeManager" autowireType="None">
+        <property name="codeDefinitionCache" ref="codeCache"/>
+    </component>
+
+    <!-- 初期化設定 -->
+    <component name="initializer" class="nablarch.core.repository.initialization.BasicApplicationInitializer">
+        <property name="initializeList">
+            <list>
+                <component-ref name="codeLoader"/>
+                <component-ref name="codeCache"/>
+            </list>
+        </property>
+    </component>
+</component-configuration>
