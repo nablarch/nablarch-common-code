@@ -28,9 +28,7 @@ dependencies {
   provided 'javax.validation:validation-api:1.1.0.Final'
 
   testCompile 'junit:junit:4.12'
-  testCompile 'com.nablarch.dev:nablarch-test-support:0.0.7'
 
-  testCompile "com.nablarch.framework:nablarch-core-jdbc:${nablarchCoreJdbcVersion}"
   testCompile "com.nablarch.framework:nablarch-core-repository:${nablarchCoreRepositoryVersion}"
   testRuntime "com.nablarch.framework:nablarch-core-applog:${nablarchCoreApplogVersion}"
   testCompile 'junit:junit:4.12'

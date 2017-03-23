@@ -4,19 +4,18 @@ import nablarch.core.ThreadContext;
 import nablarch.core.cache.BasicStaticDataCache;
 import nablarch.core.repository.SystemRepository;
 import nablarch.test.support.SystemRepositoryResource;
-import nablarch.test.support.db.helper.DatabaseTestRunner;
-import nablarch.test.support.db.helper.VariousDbTestHelper;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.*;
 
-@RunWith(DatabaseTestRunner.class)
 public class CodeUtilTest {
 
     @Rule
@@ -25,38 +24,21 @@ public class CodeUtilTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    private static List<CodePattern> patternList = new ArrayList<CodePattern>();
+    private static List<CodeName> nameList = new ArrayList<CodeName>();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        patternList = TestCodeCreator.createPatternList();
+        nameList = TestCodeCreator.createNameList();
+    }
 
-        VariousDbTestHelper.createTable(CodeName.class);
-        VariousDbTestHelper.createTable(CodePattern.class);
-
-        VariousDbTestHelper.setUpTable(
-                new CodePattern("0001", "01", "1", "0", "0"),
-                new CodePattern("0001", "02", "1", "0", "0"),
-                new CodePattern("0002", "01", "1", "0", "0"),
-                new CodePattern("0002", "02", "1", "0", "0"),
-                new CodePattern("0002", "03", "0", "1", "0"),
-                new CodePattern("0002", "04", "0", "1", "0"),
-                new CodePattern("0002", "05", "1", "0", "0")
-        );
-
-        VariousDbTestHelper.setUpTable(
-                new CodeName("0001", "01", "en", 2L, "Male", "M", "01:Male", "0001-01-en"),
-                new CodeName("0001", "02", "en", 1L, "Female", "F", "02:Female", "0001-02-en"),
-                new CodeName("0002", "01", "en", 1L, "Initial State", "Initial", "", "0002-01-en"),
-                new CodeName("0002", "02", "en", 2L, "Waiting For Batch Start", "Waiting", "", "0002-02-en"),
-                new CodeName("0002", "03", "en", 3L, "Batch Running", "Running", "", "0002-03-en"),
-                new CodeName("0002", "04", "en", 4L, "Batch Execute Completed Checked", "Completed", "", "0002-04-en"),
-                new CodeName("0002", "05", "en", 5L, "Batch Result Checked", "Checked", "", "0002-05-en"),
-                new CodeName("0001", "01", "ja", 1L, "男性", "男", "01:Male", "0001-01-ja"),
-                new CodeName("0001", "02", "ja", 2L, "女性", "女", "02:Female", "0001-02-ja"),
-                new CodeName("0002", "01", "ja", 1L, "初期状態", "初期", "", "0002-01-ja"),
-                new CodeName("0002", "02", "ja", 2L, "処理開始待ち", "待ち", "", "0002-02-ja"),
-                new CodeName("0002", "03", "ja", 3L, "処理実行中", "実行", "", "0002-03-ja"),
-                new CodeName("0002", "04", "ja", 4L, "処理実行完了", "完了", "", "0002-04-ja"),
-                new CodeName("0002", "05", "ja", 5L, "処理結果確認完了", "確認", "", "0002-05-ja")
-        );
+    @Before
+    public void setUp() throws Exception {
+        MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
+        codeLoader.setPatterns(patternList);
+        codeLoader.setNames(nameList);
+        codeLoader.initialize();
     }
 
     @Test

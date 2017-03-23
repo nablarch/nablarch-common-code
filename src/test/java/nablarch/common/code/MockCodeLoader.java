@@ -1,285 +1,199 @@
 package nablarch.common.code;
 
 import nablarch.core.cache.StaticDataLoader;
-import nablarch.core.db.connection.AppDbConnection;
-import nablarch.core.db.statement.SqlPStatement;
-import nablarch.core.db.statement.SqlResultSet;
-import nablarch.core.db.statement.SqlRow;
-import nablarch.core.db.transaction.SimpleDbTransactionExecutor;
-import nablarch.core.db.transaction.SimpleDbTransactionManager;
 import nablarch.core.repository.initialization.Initializable;
 import nablarch.core.util.I18NUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * データベースからコードをロードするモッククラス。
- * 
+ * コードをMapとして保持するモッククラス。
+ *
  * @author Naoki Yamamoto
  */
 public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
 
-    /** 使用するテーブル名／カラム名 */
-    private Map<String, String> dbSchema = new HashMap<String, String>() {{
-        put("codeName", "CODE_NAME");
-        put("codeNameId", "ID");
-        put("codeNameValue", "VALUE");
-        put("codeNameLang", "LANG");
-        put("codeNameSortOrder", "SORT_ORDER");
-        put("codeNameName", "NAME");
-        put("codeNameShortName", "SHORT_NAME");
-        put("codePattern", "CODE_PATTERN");
-        put("codePatternId", "ID");
-        put("codePatternValue", "VALUE");
-    }};
-
-    /** パターンカラム名 */
+    /**
+     * パターンカラム名
+     */
     private String[] patternColumnNames = new String[]{"PATTERN1", "PATTERN2", "PATTERN3"};
-
-    /** オプション名称のカラム名 */
+    /**
+     * オプション名称のカラム名
+     */
     private String[] optionNameColumnNames = new String[]{"NAME_WITH_VALUE", "OPTION01"};
 
-    /** データベーストランザクションマネージャ */
-    private SimpleDbTransactionManager dbManager;
+    private List<Code> codeList;
+    private List<CodePattern> patterns;
+    private List<CodeName> names;
 
-    /**
-     * 全てのコードをロードするSQL文。
-     */
-    private String selectAllStatement;
-
-    /**
-     * 1つのコードをロードするSQL文。
-     */
-    private String selectOneCodeStatement;
-
-    /**
-     * データベーストランザクションマネージャを設定する。
-     *
-     * @param dbManager データベーストランザクションマネージャ
-     */
-    public void setDbManager(SimpleDbTransactionManager dbManager) {
-        this.dbManager = dbManager;
+    public void setPatterns(List<CodePattern> patterns) {
+        this.patterns = patterns;
     }
 
-    /**
-     * {@inheritDoc}<br/>
-     * <br/>
-     * 
-     * 本機能ではインデックスは提供しないためnullを返す。
-     */
-    public Object generateIndexKey(String indexName, Code value) {
+    public void setNames(List<CodeName> names) {
+        this.names = names;
+    }
+
+    @Override
+    public Code getValue(Object id) {
+        for (Code code : codeList) {
+            if (code instanceof BasicCode) {
+                if (((BasicCode) code).codeId.equals(id)) {
+                    return code;
+                }
+            }
+        }
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Object getId(Code value) {
-        return value.getCodeId();
+    @Override
+    public List<Code> getValues(String indexName, Object key) {
+        return null;
     }
 
-    /**
-     * {@inheritDoc}<br/>
-     * <br/>
-     * 
-     * 本機能ではインデックスは提供しないためnullを返す。
-     */
+    @Override
+    public List<Code> loadAll() {
+        return codeList;
+    }
+
+    @Override
     public List<String> getIndexNames() {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Code getValue(final Object id) {
+    @Override
+    public Object getId(Code value) {
+        return value.getCodeId();
+    }
 
-        SqlResultSet resultSet = new SimpleDbTransactionExecutor<SqlResultSet>(
-                dbManager) {
-            @Override
-            public SqlResultSet execute(AppDbConnection connection) {
-                SqlPStatement statement = connection.prepareStatement(
-                        selectOneCodeStatement);
-                statement.setString(1, id.toString());
-                return statement.retrieve();
+    @Override
+    public Object generateIndexKey(String indexName, Code value) {
+        return null;
+    }
+
+    @Override
+    public void initialize() {
+        if (patterns == null || names == null) {
+            return;
+        }
+        codeList = new ArrayList<Code>();
+        List<CodeInfo> codeInfoList = new ArrayList<CodeInfo>();
+        String id = patterns.get(0).id;
+        for (CodePattern pattern : patterns) {
+            if (!pattern.id.equals(id)) {
+                sort(codeInfoList);
+                codeList.add(new BasicCode(id, codeInfoList));
+                id = pattern.id;
+                codeInfoList.clear();
             }
-        }.doTransaction();
+            for (CodeName name : names) {
+                if (pattern.id.equals(name.id) && pattern.value.equals(name.value)) {
+                    codeInfoList.add(new CodeInfo(pattern, name));
+                }
+            }
+        }
+        if (!codeInfoList.isEmpty()) {
+            sort(codeInfoList);
+            codeList.add(new BasicCode(id, codeInfoList));
+        }
+    }
 
-        List<Code> createdCodes = createResult(resultSet);
-        if (createdCodes.size() == 1) {
-            return createdCodes.get(0);
-        } else {
+    private void sort(List<CodeInfo> list) {
+        Collections.sort(list, new Comparator<CodeInfo>() {
+            @Override
+            public int compare(CodeInfo o1, CodeInfo o2) {
+                int comp = o1.getLang().compareTo(o2.getLang());
+                if (comp != 0) {
+                    return comp;
+                }
+                return (int) (o1.getSortOrder() - o2.getSortOrder());
+            }
+        });
+    }
+
+    private final class CodeInfo {
+        private CodePattern codePattern;
+        private CodeName codeName;
+
+        public CodeInfo(CodePattern pattern, CodeName name) {
+            if (!(pattern.id.equals(name.id) && pattern.value.equals(name.value))) {
+                throw new IllegalArgumentException("not match");
+            }
+            codePattern = pattern;
+            codeName = name;
+        }
+
+        public String getLang() {
+            return codeName.lang;
+        }
+
+        public String getName() {
+            return codeName.name;
+        }
+
+        public String getValue() {
+            return codeName.value;
+        }
+
+        public String getShortName() {
+            return codeName.shortName;
+        }
+
+        public Long getSortOrder() {
+            return codeName.sortOrder;
+        }
+
+        public String getString(String propName) {
+            if ("PATTERN1".equals(propName)) {
+                return codePattern.pattern1;
+            }
+            if ("PATTERN2".equals(propName)) {
+                return codePattern.pattern2;
+            }
+            if ("PATTERN3".equals(propName)) {
+                return codePattern.pattern3;
+            }
+            if ("NAME_WITH_VALUE".equals(propName)) {
+                return codeName.nameWithValue;
+            }
+            if ("OPTION01".equals(propName)) {
+                return codeName.option01;
+            }
             return null;
         }
     }
 
     /**
-     * {@inheritDoc}<br/>
-     * <br/>
-     * 
-     * 本機能ではインデックスは提供しないためnullを返す。
-     */
-    public List<Code> getValues(String indexName, Object key) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public List<Code> loadAll() {
-        SqlResultSet resultSet = new SimpleDbTransactionExecutor<SqlResultSet>(
-                dbManager) {
-            @Override
-            public SqlResultSet execute(AppDbConnection connection) {
-                SqlPStatement statement = connection.prepareStatement(
-                        selectAllStatement);
-                SqlResultSet results = statement.retrieve();
-                return results;
-            }
-        }.doTransaction();
-        return createResult(resultSet);
-    }
-
-    /**
-     * データベースの検索結果からBasicCodeのListを作成する。
-     * 
-     * @param queryResults データベースの検索結果
-     * @return BasicCodeのList
-     */
-    private List<Code> createResult(SqlResultSet queryResults) {
-        List<Code> basicCodeList = new ArrayList<Code>();
-
-        String codeId = "";
-        List<SqlRow> data = new ArrayList<SqlRow>();
-        
-        for (SqlRow row : queryResults) {
-            String currentCodeId = row.getString(dbSchema.get("codePatternId"));
-            if (!codeId.equals(currentCodeId)) {
-                if (data.size() > 0) {
-                    basicCodeList.add(new BasicCode(codeId, data));
-                    data.clear();
-                }
-                codeId = currentCodeId;
-            }
-            data.add(row);
-        }
-
-        if (data.size() > 0) {
-            basicCodeList.add(new BasicCode(codeId, data));
-        }
-
-        return Collections.unmodifiableList(basicCodeList);
-    }
-
-    /**
-     * SQL文を初期化する。
-     */
-    private void initializeStatements() {
-
-        StringBuilder codePatternColumns = new StringBuilder();
-        for (String patternColumnName : patternColumnNames) {
-            codePatternColumns.append("$codePattern$.");
-            codePatternColumns.append(patternColumnName);
-            codePatternColumns.append(", ");
-        }
-
-        StringBuilder optionNameColumns = new StringBuilder();
-        for (String optionNameColumn : optionNameColumnNames) {
-            codePatternColumns.append("$codeName$.");
-            codePatternColumns.append(optionNameColumn);
-            codePatternColumns.append(", ");
-        }
-        
-        String preSelectStatement =
-           "SELECT "
-                + codePatternColumns
-                + optionNameColumns
-                + "$codeName$.$codeNameId$, "
-                + "$codeName$.$codeNameValue$, "
-                + "$codeName$.$codeNameLang$, "
-                + "$codeName$.$codeNameName$, "
-                + "$codeName$.$codeNameShortName$ "
-          + "FROM $codePattern$ "
-              + "INNER JOIN $codeName$ "
-                  + "ON $codePattern$.$codePatternId$ = $codeName$.$codeNameId$ "
-                  + "AND $codePattern$.$codePatternValue$ = $codeName$.$codeNameValue$ ";
-
-        String preWhereStatement =
-            "WHERE "
-                + "$codePattern$.$codePatternId$ = ? ";
-
-        String preOrderByStatement =
-            "ORDER BY "
-              + "$codeName$.$codeNameId$, "
-              + "$codeName$.$codeNameLang$, "
-              + "$codeName$.$codeNameSortOrder$ ";
-
-        String selectStatement = replaceStatement(preSelectStatement);
-        String whereStatement = replaceStatement(preWhereStatement);
-        String orderByStatement = replaceStatement(preOrderByStatement);
-
-        selectAllStatement = selectStatement + orderByStatement;
-        selectOneCodeStatement = selectStatement + whereStatement + orderByStatement;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void initialize() {
-        initializeStatements();
-    }
-
-    /**
-     * SQL文の置き換え文字の置き換えを行う。
-     * 
-     * @param statement 置き換え対象の文字
-     * @return 置き換え文字を置き換えた文字列。
-     */
-    private String replaceStatement(String statement) {
-        Matcher m = Pattern.compile("\\$([_0-9a-zA-Z]+)\\$").matcher(statement);
-        StringBuffer sb = new StringBuffer();
-        while (m.find()) {
-            String replacement = m.group(1);
-            m.appendReplacement(sb, dbSchema.get(replacement));
-        }
-        m.appendTail(sb);
-        String createdSelectStatement = sb.toString();
-        return createdSelectStatement;
-    }
-
-    /**
      * ロードするコードの実装。
-     * 
      */
     private final class BasicCode implements Code {
 
         /**
          * コンストラクタ。
-         * 
-         * 
+         *
          * @param codeId コードID
-         * @param data コードを構成するデータのList。<br/>
-         *              データは言語を第1の条件としてソートされている必要がある。
+         * @param data   コードを構成するデータのList。<br/>
+         *               データは言語を第1の条件としてソートされている必要がある。
          */
-        private BasicCode(String codeId, List<SqlRow> data) {
-            
+        private BasicCode(String codeId, List<CodeInfo> data) {
+
             this.codeId = codeId;
 
             parLangValuesMap = new HashMap<Locale, PerLangValues>();
-     
-            List<SqlRow> langData = new ArrayList<SqlRow>();
+
+            List<CodeInfo> langData = new ArrayList<CodeInfo>();
             String lang = "";
 
-            for (SqlRow row : data) {
-                String currentLang = row.getString(dbSchema.get("codeNameLang"));
+            for (CodeInfo row : data) {
+                String currentLang = row.getLang();
                 if (!lang.equals(currentLang)) {
                     if (langData.size() > 0) {
                         PerLangValues value = new PerLangValues(langData);
@@ -308,20 +222,26 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
                     patternValuesMap.get(pattern).addAll(parLangValues.patternMap.get(pattern));
                 }
             }
-
-
         }
 
-        /** コードID */
+        /**
+         * コードID
+         */
         private final String codeId;
 
-        /** 言語と言語毎に持つ値のMap */
+        /**
+         * 言語と言語毎に持つ値のMap
+         */
         private final Map<Locale, PerLangValues> parLangValuesMap;
 
-        /** コードに含まれるコード値のセット */
+        /**
+         * コードに含まれるコード値のセット
+         */
         private final Set<String> values;
 
-        /** パターンに含まれる値のセット */
+        /**
+         * パターンに含まれる値のセット
+         */
         private final Map<String, Set<String>> patternValuesMap;
 
         /**
@@ -337,7 +257,7 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
         public boolean contains(String value) {
             return values.contains(value);
         }
-        
+
         /**
          * {@inheritDoc}
          */
@@ -395,7 +315,7 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
          * {@inheritDoc}
          */
         public String getOptionalName(String value, String optionColumnName,
-                Locale locale) {
+                                      Locale locale) {
             PerLangValues parLangValues = parLangValuesMap.get(locale);
             if (parLangValues == null) {
                 throw new IllegalArgumentException("locale was not found. "
@@ -475,16 +395,14 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
          * <br/>
          * key:コード値<br/>
          * value:コード名称<br/>
-         * 
          */
         private final Map<String, String> names;
-    
+
         /**
          * 略称を保持するMap。<br/>
          * <br/>
          * key:コード値<br/>
          * value:コードの略称<br/>
-         * 
          */
         private final Map<String, String> shortNames;
 
@@ -493,18 +411,17 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
          * <br/>
          * key:コード値<br/>
          * value:コードのオプション名称<br/>
-         * 
          */
         private final Map<String, Map<String, String>> optionNamesMap;
 
 
         /**
          * コンストラクタ。
-         * 
+         *
          * @param data コードを構成するデータのList。<br/>
-         *              データはソート順を第1の条件としてソートされている必要がある。
+         *             データはソート順を第1の条件としてソートされている必要がある。
          */
-        private PerLangValues(List<SqlRow> data) {
+        private PerLangValues(List<CodeInfo> data) {
 
             List<String> tmpValues = new ArrayList<String>();
 
@@ -521,11 +438,11 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
                 tmpPatternMap.put(patternName, new ArrayList<String>());
             }
 
-            for (SqlRow row : data) {
-                String value = row.getString(dbSchema.get("codeNameValue"));
+            for (CodeInfo row : data) {
+                String value = row.getValue();
                 tmpValues.add(value);
-                tmpNames.put(value, row.getString(dbSchema.get("codeNameName")));
-                tmpShortNames.put(value, row.getString(dbSchema.get("codeNameShortName")));
+                tmpNames.put(value, row.getName());
+                tmpShortNames.put(value, row.getShortName());
 
                 for (String optionName : optionNameColumnNames) {
                     tmpOptionNamesMap.get(optionName).put(value, row.getString(optionName));
@@ -555,5 +472,6 @@ public class MockCodeLoader implements StaticDataLoader<Code>, Initializable {
             this.optionNamesMap = Collections.unmodifiableMap(tmpOptionNamesMap);
             this.patternMap = tmpPatternMap;
         }
+
     }
 }
