@@ -23,6 +23,14 @@ apply plugin: 'cobertura'
 sourceCompatibility=JavaVersion.VERSION_1_6
 targetCompatibility=JavaVersion.VERSION_1_6
 
+configurations {
+  all*.exclude module: 'nablarch-test-support-hereis'
+  all*.exclude module: 'h2'
+  all*.exclude module: 'commons-dbcp'
+  all*.exclude module: 'eclipselink'
+  all*.exclude module: 'jsp-api-2.1-glassfish'
+}
+
 dependencies {
   compile "com.nablarch.framework:nablarch-core-validation:${nablarchCoreValidationVersion}"
   provided 'javax.validation:validation-api:1.1.0.Final'
@@ -49,13 +57,6 @@ test {
   )
 
   ignoreFailures = true
-
-  doFirst {
-    def logDir = new File('log')
-    if (!logDir.exists()) {
-      assert logDir.mkdirs()
-    }
-  }
 
   cobertura {
     coverageSourceDirs = ["${projectDir}/src/main/java/"]
