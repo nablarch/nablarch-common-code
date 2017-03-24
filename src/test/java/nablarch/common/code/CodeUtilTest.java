@@ -5,13 +5,10 @@ import nablarch.core.cache.BasicStaticDataCache;
 import nablarch.core.repository.SystemRepository;
 import nablarch.test.support.SystemRepositoryResource;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.*;
@@ -24,20 +21,11 @@ public class CodeUtilTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private static List<CodePattern> patternList = new ArrayList<CodePattern>();
-    private static List<CodeName> nameList = new ArrayList<CodeName>();
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        patternList = TestCodeCreator.createPatternList();
-        nameList = TestCodeCreator.createNameList();
-    }
-
     @Before
     public void setUp() throws Exception {
         MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
-        codeLoader.setPatterns(patternList);
-        codeLoader.setNames(nameList);
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
         codeLoader.initialize();
     }
 

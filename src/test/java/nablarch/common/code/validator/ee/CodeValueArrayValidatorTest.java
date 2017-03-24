@@ -1,19 +1,15 @@
 package nablarch.common.code.validator.ee;
 
-import nablarch.common.code.CodeName;
-import nablarch.common.code.CodePattern;
 import nablarch.common.code.MockCodeLoader;
 import nablarch.common.code.TestCodeCreator;
 import nablarch.common.code.validator.ee.CodeValue.CodeValueArrayValidator;
 import nablarch.test.support.SystemRepositoryResource;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
 import javax.validation.*;
 import java.lang.annotation.Annotation;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -31,20 +27,11 @@ public class CodeValueArrayValidatorTest {
 
     private ConstraintValidatorContext unused = null;
 
-    private static List<CodePattern> patternList;
-    private static List<CodeName> nameList;
-
-    @BeforeClass
-    public static void classSetUp() throws Exception {
-        patternList = TestCodeCreator.createPatternList();
-        nameList = TestCodeCreator.createNameList();
-    }
-
     @Before
     public void setUp() throws Exception {
         MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
-        codeLoader.setPatterns(patternList);
-        codeLoader.setNames(nameList);
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
         codeLoader.initialize();
     }
     private static class SampleBean {

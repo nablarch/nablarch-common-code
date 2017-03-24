@@ -1,12 +1,10 @@
 package nablarch.common.code;
 
 
-import java.util.List;
 import java.util.Locale;
 
 import nablarch.core.cache.BasicStaticDataCache;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -27,21 +25,12 @@ public class BasicCodeManagerTest {
     /** test target */
     private BasicCodeManager target;
 
-    private static List<CodePattern> patternList;
-    private static List<CodeName> nameList;
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        patternList = TestCodeCreator.createPatternList();
-        nameList = TestCodeCreator.createNameList();
-    }
-
     @Before
     public void setUp() throws Exception {
         target = repositoryResource.getComponentByType(BasicCodeManager.class);
         MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
-        codeLoader.setPatterns(patternList);
-        codeLoader.setNames(nameList);
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
         codeLoader.initialize();
     }
 

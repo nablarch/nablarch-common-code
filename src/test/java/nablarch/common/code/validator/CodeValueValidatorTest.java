@@ -1,20 +1,15 @@
 package nablarch.common.code.validator;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import nablarch.common.code.MockCodeLoader;
 import nablarch.common.code.TestCodeCreator;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import nablarch.common.code.CodeName;
-import nablarch.common.code.CodePattern;
 import nablarch.core.ThreadContext;
 
 import nablarch.core.validation.PropertyName;
@@ -46,15 +41,6 @@ public class CodeValueValidatorTest {
             {"PROP0002", "ja", "状態", "en", "state"},
     };
 
-    private static List<CodePattern> patternList = new ArrayList<CodePattern>();
-    private static List<CodeName> nameList = new ArrayList<CodeName>();
-
-    @BeforeClass
-    public static void classSetup() throws Exception {
-        patternList = TestCodeCreator.createPatternList();
-        nameList = TestCodeCreator.createNameList();
-    }
-
     @Before
     public void setUp() throws Exception {
         repositoryResource.getComponentByType(MockStringResourceHolder.class)
@@ -62,8 +48,8 @@ public class CodeValueValidatorTest {
         Map<String, String[]> params = new HashMap<String, String[]>();
         params.put("param", new String[] {"10"});
         MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
-        codeLoader.setPatterns(patternList);
-        codeLoader.setNames(nameList);
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
         codeLoader.initialize();
     }
 

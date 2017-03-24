@@ -1,16 +1,12 @@
 package nablarch.common.code.validator.ee;
 
 import java.lang.annotation.Annotation;
-import java.util.List;
 
 import javax.validation.*;
 
-import nablarch.common.code.CodeName;
-import nablarch.common.code.CodePattern;
 import nablarch.common.code.MockCodeLoader;
 import nablarch.common.code.TestCodeCreator;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -32,19 +28,11 @@ public class CodeValueValidatorTest {
 
     private ConstraintValidatorContext unused = null;
 
-    private static List<CodePattern> patternList;
-    private static List<CodeName> nameList;
-
-    @BeforeClass
-    public static void classSetUp() throws Exception {
-        patternList = TestCodeCreator.createPatternList();
-        nameList = TestCodeCreator.createNameList();
-    }
     @Before
     public void setUp() throws Exception {
         MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
-        codeLoader.setPatterns(patternList);
-        codeLoader.setNames(nameList);
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
         codeLoader.initialize();
     }
 
