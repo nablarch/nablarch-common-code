@@ -1,12 +1,12 @@
 package nablarch.common.code.validator.ee;
 
+import nablarch.common.code.MockCodeLoader;
+import nablarch.common.code.TestCodeCreator;
 import nablarch.common.code.validator.ee.CodeValue.CodeValueArrayValidator;
 import nablarch.test.support.SystemRepositoryResource;
-import nablarch.test.support.db.helper.DatabaseTestRunner;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import javax.validation.*;
 import java.lang.annotation.Annotation;
@@ -19,7 +19,6 @@ import static org.junit.Assert.assertThat;
  *
  * @author Naoki Yamamoto
  */
-@RunWith(DatabaseTestRunner.class)
 public class CodeValueArrayValidatorTest {
 
     @Rule
@@ -28,11 +27,13 @@ public class CodeValueArrayValidatorTest {
 
     private ConstraintValidatorContext unused = null;
 
-    @BeforeClass
-    public static void classSetUp() throws Exception {
-        nablarch.common.code.validator.CodeValueValidatorTest.classSetup();
+    @Before
+    public void setUp() throws Exception {
+        MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
+        codeLoader.initialize();
     }
-
     private static class SampleBean {
         @CodeValue(codeId = "0001")
         String[] code;

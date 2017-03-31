@@ -4,13 +4,13 @@ import java.lang.annotation.Annotation;
 
 import javax.validation.*;
 
-import org.junit.BeforeClass;
+import nablarch.common.code.MockCodeLoader;
+import nablarch.common.code.TestCodeCreator;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import nablarch.test.support.SystemRepositoryResource;
-import nablarch.test.support.db.helper.DatabaseTestRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -20,7 +20,6 @@ import static org.junit.Assert.assertThat;
  *
  * @author T.Kawasaki
  */
-@RunWith(DatabaseTestRunner.class)
 public class CodeValueValidatorTest {
 
     @Rule
@@ -29,9 +28,12 @@ public class CodeValueValidatorTest {
 
     private ConstraintValidatorContext unused = null;
 
-    @BeforeClass
-    public static void classSetUp() throws Exception {
-        nablarch.common.code.validator.CodeValueValidatorTest.classSetup();
+    @Before
+    public void setUp() throws Exception {
+        MockCodeLoader codeLoader = repositoryResource.getComponent("codeLoader");
+        codeLoader.setPatterns(TestCodeCreator.createPatternList());
+        codeLoader.setNames(TestCodeCreator.createNameList());
+        codeLoader.initialize();
     }
 
     private interface NormalUser {}

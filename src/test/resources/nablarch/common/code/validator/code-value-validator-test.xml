@@ -2,16 +2,8 @@
 <component-configuration xmlns="http://tis.co.jp/nablarch/component-configuration"
                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <import file="db-default.xml"/>
-
-    <!-- DbManagerの設定 -->
-    <component name="codeDbManager" class="nablarch.core.db.transaction.SimpleDbTransactionManager">
-        <property name="dbTransactionName" value="code"/>
-    </component>
-    
     <component name="codeLoader"
                class="nablarch.common.code.MockCodeLoader">
-        <property name="dbManager" ref="codeDbManager"/>
     </component>
 
     <component name="codeCache"
