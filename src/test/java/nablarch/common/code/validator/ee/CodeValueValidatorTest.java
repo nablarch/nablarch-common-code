@@ -2,7 +2,7 @@ package nablarch.common.code.validator.ee;
 
 import java.lang.annotation.Annotation;
 
-import javax.validation.*;
+import jakarta.validation.*;
 
 import nablarch.common.code.MockCodeLoader;
 import nablarch.common.code.TestCodeCreator;

@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.validation.*;
+import jakarta.validation.*;
 import java.lang.annotation.Annotation;
 
 import static org.hamcrest.CoreMatchers.is;
